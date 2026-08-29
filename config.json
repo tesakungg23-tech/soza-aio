@@ -1,11 +1,11 @@
 {
     "token": "",
     "language": "en",
-    "prefix": "!",
+    "prefix": ".",
     "mongodbUri": "",
     "excessCommands": {
         "other": true,
-        "hentai": true,
+        "hentai": false,
         "economy" : true
     },
     "categories": {
