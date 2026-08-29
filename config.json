@@ -2,7 +2,7 @@
     "token": "",
     "language": "en",
     "prefix": ".",
-    "mongodbUri": "",
+    "mongodbUri": "mongodb+srv://tesakungg23_db_user:<db_password>@cluster0.1o1ppyz.mongodb.net/?appName=Cluster0",
     "excessCommands": {
         "other": true,
         "hentai": false,
