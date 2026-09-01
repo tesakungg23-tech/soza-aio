@@ -14,6 +14,13 @@ module.exports = async (client, config, colors) => {
 
         for (const file of commandFiles) {
             const command = require(path.join(commandsPath, folder, file));
+            // Commands are organized by folder, but older command modules do
+            // not all declare their category explicitly. Use the folder as
+            // the fallback so interactionCreate does not treat them as
+            // category "undefined" and reject them as disabled.
+            if (!command.category) {
+                command.category = folder;
+            }
             client.commands.set(command.data.name, command);
             commands.push(command.data.toJSON());
         }
