@@ -1,8 +1,5 @@
-const fs = require('fs');
-const path = require('path');
 const { categories } = require('../config.json');
 const lang = require('./loadLanguage');
-const client = require('../main');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle,ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const VerificationConfig = require('../models/gateVerification/verificationConfig');
 const verificationCodes = new Map();
@@ -202,11 +199,13 @@ module.exports = {
         
      
         const subcommandName = interaction.options.getSubcommand(false);
-        const isDisabled = await DisabledCommand.findOne({
-            guildId: interaction.guild.id,
-            commandName: interaction.commandName,
-            ...(subcommandName ? { subcommandName } : {})
-        });
+        const isDisabled = interaction.guild
+            ? await DisabledCommand.findOne({
+                guildId: interaction.guild.id,
+                commandName: interaction.commandName,
+                ...(subcommandName ? { subcommandName } : {})
+            })
+            : null;
         
         if (isDisabled) {
             try {
@@ -263,21 +262,3 @@ module.exports = {
         
     },
 };
-
-
-const commandsPath = path.join(__dirname, '../commands');
-const commandFiles = fs.readdirSync(commandsPath).reduce((files, folder) => {
-    const folderPath = path.join(commandsPath, folder);
-    const fileNames = fs.readdirSync(folderPath);
-    fileNames.forEach(file => {
-        const filePath = path.join(folderPath, file);
-        if (file.endsWith('.js')) {
-            const command = require(filePath);
-            command.category = folder; 
-            files.set(command.name, command);
-        }
-    });
-    return files;
-}, new Map());
-
-client.commands = commandFiles;
