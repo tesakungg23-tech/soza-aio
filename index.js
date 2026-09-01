@@ -1,29 +1,54 @@
 const { connectToDatabase } = require('./mongodb');
 const initializeBot = require('./utils/intializer');
+const config = require('./config.json');
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function validateEnvironment() {
+    const token = process.env.TOKEN || config.token;
+    const mongodbUri = process.env.MONGODB_URI || config.mongodbUri;
+    const missing = [];
+
+    if (!token) {
+        missing.push('TOKEN');
+    }
+
+    if (!mongodbUri || mongodbUri.includes('<db_password>')) {
+        missing.push('MONGODB_URI');
+    }
+
+    if (missing.length > 0) {
+        throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
+}
+
 (async () => {
-    await connectToDatabase();
-    const client = require('./main');
-    await new Promise((resolve) => {
-        if (client.isReady()) {
-            resolve();
-        } else {
-            client.once('ready', resolve);
-        }
-    });
-    
-    console.log('\n[WAIT] Client ready, loading event handlers...\n');
-    await delay(2000); 
-    
-    await loadEventHandlers(client);
-    
-    await delay(5000); 
-    require('./shiva');
- 
-    console.log('\n[WAIT] Stabilizing before bot initialization...\n');
-    await initializeBot();
-    console.log('\n[READY] Bot fully initialized and running.\n');
+    try {
+        validateEnvironment();
+        await connectToDatabase();
+        const client = require('./main');
+        await new Promise((resolve) => {
+            if (client.isReady()) {
+                resolve();
+            } else {
+                client.once('ready', resolve);
+            }
+        });
+
+        console.log('\n[WAIT] Client ready, loading event handlers...\n');
+        await delay(2000);
+
+        await loadEventHandlers(client);
+
+        await delay(5000);
+        require('./shiva');
+
+        console.log('\n[WAIT] Stabilizing before bot initialization...\n');
+        await initializeBot(client);
+        console.log('\n[READY] Bot fully initialized and running.\n');
+    } catch (error) {
+        console.error('[FATAL] Bot startup failed:', error.message);
+        process.exitCode = 1;
+    }
 })();
 
 const loadEventHandlers = async (client) => {
