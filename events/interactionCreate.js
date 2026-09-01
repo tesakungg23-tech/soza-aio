@@ -199,7 +199,9 @@ module.exports = {
         
      
         const subcommandName = interaction.options.getSubcommand(false);
-        const isDisabled = interaction.guild
+        const isCommandRecovery = interaction.commandName === 'manage-commands'
+            && interaction.guild.ownerId === interaction.user.id;
+        const isDisabled = interaction.guild && !isCommandRecovery
             ? await DisabledCommand.findOne({
                 guildId: interaction.guild.id,
                 commandName: interaction.commandName,
