@@ -4,10 +4,7 @@ module.exports = {
   ownerId: '1004206704994566164',
   status: {
     rotateDefault: [
-      { name: 'Netflix', type: ActivityType.Watching },
-      { name: 'GTA VI', type: ActivityType.Playing },
-      { name: 'on YouTube', type: ActivityType.Streaming, url: 'https://www.twitch.tv/glaceytt' },
-      { name: 'Spotify', type: ActivityType.Custom },
+      { name: 'soza', type: ActivityType.Streaming, url: 'https://www.twitch.tv/glaceytt' },
     ],
     songStatus: true
   },
