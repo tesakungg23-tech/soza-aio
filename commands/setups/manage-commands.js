@@ -39,6 +39,10 @@ module.exports = {
         .addSubcommand(sub =>
             sub.setName('view')
                 .setDescription('View disabled commands in this server')
+        )
+        .addSubcommand(sub =>
+            sub.setName('reset')
+                .setDescription('Enable all commands in this server')
         ),
 
     async execute(interaction) {
@@ -46,11 +50,19 @@ module.exports = {
             if (!await checkPermissions(interaction)) return;
 
         const subcommand = interaction.options.getSubcommand();
+        const guildId = interaction.guild.id;
+
+        if (subcommand === 'reset') {
+            const result = await DisabledCommand.deleteMany({ guildId });
+            return interaction.reply({
+                content: `✅ All commands are enabled again. Removed ${result.deletedCount || 0} disabled command setting(s).`,
+                ephemeral: true
+            });
+        }
 
         if (subcommand === 'toggle') {
             const commandName = interaction.options.getString('command');
             const subcommandName = interaction.options.getString('subcommand');
-            const guildId = interaction.guild.id;
 
             const existing = await DisabledCommand.findOne({ guildId, commandName, subcommandName });
             if (existing) {
