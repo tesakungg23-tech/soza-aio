@@ -14,6 +14,7 @@ const mongoOptions = {
     serverSelectionTimeoutMS: 30000,
     connectTimeoutMS: 30000,
     family: 4,
+    authSource: 'admin',
 };
 const client = new MongoClient(uri, mongoOptions);
 const mongoose = require('mongoose');
