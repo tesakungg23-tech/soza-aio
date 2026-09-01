@@ -42,10 +42,10 @@
 
 <h3>How to Install</h3>
 
-<h4>Step 1: Update <code>config.json</code> [ USE ENV FILES ]</h4>
+<h4>Step 1: Configure environment variables</h4>
 
 <ol>
-  <li>Open the <code>config.json</code> and add your MongoDB URL.</li>
+  <li>Set the variables in your hosting provider. Do not commit tokens or database credentials to <code>config.json</code>.</li>
 </ol>
 
 <h4>ENV SETUP</h4>
@@ -63,21 +63,25 @@ INSTAGRAM_ACCESS_TOKEN=
 MONGODB_URI=
 DISCORD_USER_ID=
 BOT_API=
+DISCORD_GUILD_ID=
+REQUIRE_BOT_VERIFICATION=false
 </pre>
 
 <h4>Step 2: Set Up Hosting Service</h4>
 
 <ol>
-  <li>Go to your preferred hosting service. For this guide, we use <a href="https://render.com/">Render</a>.</li>
-  <li>In the Build & Deploy section, paste your repository URL.</li>
+  <li>Create a new service in <a href="https://railway.com/">Railway</a> from this repository.</li>
+  <li>Railway will use <code>railway.json</code> and install the project with pnpm.</li>
+  <li>Add at least <code>TOKEN</code> and <code>MONGODB_URI</code> in the service Variables.</li>
+  <li>Set <code>DISCORD_GUILD_ID</code> to your server ID so slash commands appear immediately while deploying. Without it, Discord registers them globally and propagation can take up to an hour.</li>
 </ol>
 
 <h4>Step 3: Add Build and Start Commands</h4>
 <pre>
 Run the following commands to install dependencies and start your bot:
 
-npm install
-node index.js
+pnpm install
+pnpm start
 </pre>
 
 <h4>Step 4: Get Your Bot Token</h4>
