@@ -6,8 +6,16 @@ const configPath = path.join(__dirname, 'config.json');
 require('dotenv').config(); 
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-const uri = process.env.MONGODB_URI || config.mongodbUri;
-const client = new MongoClient(uri);
+const rawUri = process.env.MONGODB_URI || config.mongodbUri;
+const uri = typeof rawUri === 'string'
+    ? rawUri.trim().replace(/^['"]|['"]$/g, '')
+    : rawUri;
+const mongoOptions = {
+    serverSelectionTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+    family: 4,
+};
+const client = new MongoClient(uri, mongoOptions);
 const mongoose = require('mongoose');
 
 async function connectToDatabase() {
@@ -19,7 +27,7 @@ async function connectToDatabase() {
         console.log('\x1b[36m[ DATABASE ]\x1b[0m', '\x1b[32mConnected to MongoDB ✅\x1b[0m');
 
        
-        await mongoose.connect(uri);
+        await mongoose.connect(uri, mongoOptions);
         console.log('\x1b[36m[ MONGOOSE ]\x1b[0m', '\x1b[32mConnected using Mongoose ✅\x1b[0m');
 
     } catch (err) {
