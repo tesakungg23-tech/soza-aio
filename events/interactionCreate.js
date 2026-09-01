@@ -199,8 +199,10 @@ module.exports = {
         
      
         const subcommandName = interaction.options.getSubcommand(false);
-        const isCommandRecovery = interaction.commandName === 'manage-commands'
-            && interaction.guild.ownerId === interaction.user.id;
+        // Keep the command-management entry point reachable so an owner or
+        // configured bot manager can recover from a disabled-command lockout.
+        // The command's own permission check still blocks unauthorized users.
+        const isCommandRecovery = interaction.commandName === 'manage-commands';
         const isDisabled = interaction.guild && !isCommandRecovery
             ? await DisabledCommand.findOne({
                 guildId: interaction.guild.id,
