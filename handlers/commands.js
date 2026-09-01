@@ -19,29 +19,41 @@ module.exports = async (client, config, colors) => {
         }
     }
 
-    // ✅ Register commands to Discord
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN || config.token);
+    const token = process.env.TOKEN || config.token;
+    if (!token) {
+        throw new Error('TOKEN is missing. Add TOKEN to the Railway service variables.');
+    }
+
+    const rest = new REST({ version: '10' }).setToken(token);
+    const applicationId = client.application?.id || client.user.id;
+    const guildId = process.env.DISCORD_GUILD_ID || process.env.GUILD_ID;
+    const commandRoute = guildId
+        ? Routes.applicationGuildCommands(applicationId, guildId)
+        : Routes.applicationCommands(applicationId);
+    const registrationScope = guildId
+        ? `server ${guildId}`
+        : 'global (may take up to an hour to appear)';
 
     try {
-        const registeredCommands = await rest.get(
-            Routes.applicationCommands(client.user.id)
-        );
+        const registeredCommands = await rest.get(commandRoute);
 
         console.log('\n' + '─'.repeat(40));
         console.log(`${colors.yellow}${colors.bright}⚡ SLASH COMMANDS${colors.reset}`);
         console.log('─'.repeat(40));
+        console.log(`${colors.cyan}[ SCOPE  ]${colors.reset} Registering commands for ${registrationScope}`);
 
         if (registeredCommands.length !== commands.length) {
             console.log(`${colors.red}[ LOADER ]${colors.reset} ${colors.green}Loading Slash Commands 🛠️${colors.reset}`);
         }
 
         await rest.put(
-            Routes.applicationCommands(client.user.id),
+            commandRoute,
             { body: commands }
         );
 
-        console.log(`${colors.red}[ LOADER ]${colors.reset} ${colors.green}Successfully Loaded Slash Commands ✅${colors.reset}`);
+        console.log(`${colors.red}[ LOADER ]${colors.reset} ${colors.green}Successfully loaded ${commands.length} slash commands ✅${colors.reset}`);
     } catch (error) {
-        console.log(`${colors.red}[ ERROR ]${colors.reset} ${colors.red}${error}${colors.reset}`);
+        console.log(`${colors.red}[ ERROR ]${colors.reset} ${colors.red}Slash command registration failed: ${error.message}${colors.reset}`);
+        throw error;
     }
 };
