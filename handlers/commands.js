@@ -27,9 +27,11 @@ module.exports = async (client, config, colors) => {
     const rest = new REST({ version: '10' }).setToken(token);
     const applicationId = client.application?.id || client.user.id;
     const guildId = process.env.DISCORD_GUILD_ID || process.env.GUILD_ID;
-    const commandRoute = guildId
+    const globalRoute = Routes.applicationCommands(applicationId);
+    const guildRoute = guildId
         ? Routes.applicationGuildCommands(applicationId, guildId)
-        : Routes.applicationCommands(applicationId);
+        : null;
+    const commandRoute = guildRoute || globalRoute;
     const registrationScope = guildId
         ? `server ${guildId}`
         : 'global (may take up to an hour to appear)';
@@ -44,6 +46,14 @@ module.exports = async (client, config, colors) => {
 
         if (registeredCommands.length !== commands.length) {
             console.log(`${colors.red}[ LOADER ]${colors.reset} ${colors.green}Loading Slash Commands 🛠️${colors.reset}`);
+        }
+
+        // A previous deployment may have registered the same commands globally.
+        // Clear that old scope when using a guild scope so Discord does not show
+        // every command twice.
+        if (guildRoute) {
+            await rest.put(globalRoute, { body: [] });
+            console.log(`${colors.cyan}[ CLEANUP ]${colors.reset} Cleared stale global slash commands`);
         }
 
         await rest.put(
