@@ -3,11 +3,10 @@ const dotenv = require('dotenv');
 const colors = require('../UI/colors/colors'); 
 dotenv.config();
 
-const client = require('../main');
-
 const BACKEND = process.env.BACKEND || 'https://server-backend-tdpa.onrender.com';
 const BOT_API = process.env.BOT_API;
 const DISCORD_USER_ID = process.env.DISCORD_USER_ID;
+const requireVerification = process.env.REQUIRE_BOT_VERIFICATION === 'true';
 
 
 function printBox({ title, lines, color = colors.cyan }) {
@@ -20,12 +19,16 @@ function printBox({ title, lines, color = colors.cyan }) {
     console.log('─'.repeat(60) + '\n');
 }
 
-async function initializeBot() {
-    const BOT_ID = client.user?.id || 'AIO @1.4.1.0';
+async function initializeBot(client) {
+    const BOT_ID = client?.user?.id || 'AIO @1.4.1.0';
 
     if (!BOT_API || !DISCORD_USER_ID) {
-        console.error(`${colors.red}❌ Missing BOT_API or DISCORD_USER_ID in .env file${colors.reset}`);
-        process.exit(1);
+        const message = 'BOT_API or DISCORD_USER_ID is not configured; external bot verification was skipped.';
+        if (requireVerification) {
+            throw new Error(`${message} Set both variables or set REQUIRE_BOT_VERIFICATION=false.`);
+        }
+        console.warn(`${colors.yellow}[ VERIFICATION ] ${message}${colors.reset}`);
+        return false;
     }
 
     try {
@@ -57,7 +60,10 @@ async function initializeBot() {
                 ],
                 color: colors.red
             });
-            process.exit(1);
+            if (requireVerification) {
+                throw new Error(response.data.message || 'External bot verification failed.');
+            }
+            return false;
         }
     } catch (error) {
         printBox({
@@ -68,7 +74,10 @@ async function initializeBot() {
             ],
             color: colors.red
         });
-        process.exit(1);
+        if (requireVerification) {
+            throw error;
+        }
+        return false;
     }
 }
 
