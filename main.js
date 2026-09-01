@@ -57,9 +57,21 @@ client.once('ready', async () => {
     }
 });
 
+client.on('error', (error) => {
+    console.error('[ CORE ] Discord client error:', error);
+});
+
+client.on('shardError', (error, shardId) => {
+    console.error(`[ CORE ] Discord gateway error on shard ${shardId}:`, error);
+});
+
+client.on('shardDisconnect', (event, shardId) => {
+    console.error(`[ CORE ] Discord gateway disconnected on shard ${shardId}: code ${event.code}`);
+});
+
 client.login(process.env.TOKEN || config.token).catch((error) => {
     console.error('[ CORE ] Discord login failed:', error);
-    process.exitCode = 1;
+    process.exit(1);
 });
 
 module.exports = client;
