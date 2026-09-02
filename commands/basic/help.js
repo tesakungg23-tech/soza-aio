@@ -547,15 +547,6 @@ module.exports = {
                 );
                 displayComponents.push(footerContainer);
                 displayComponents.push(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-                                const developerContainer = new ContainerBuilder().setAccentColor(0x828b);
-                developerContainer.addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(
-                        pageData.isChunked 
-                            ? `Developed By GlaceYT • https://glaceyt.com`
-                            : `Developed By GlaceYT • https://glaceyt.com`
-                    )
-                );
-                displayComponents.push(developerContainer);
             }
         }
 
