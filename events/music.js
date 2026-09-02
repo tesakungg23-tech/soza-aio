@@ -1732,7 +1732,16 @@ module.exports = (client) => {
         });
 
         client.riffy.on('trackError', async (player, track, error) => {
-            console.error(`V2 Track error in guild ${player.guildId}:`, error);
+            const exception = error?.exception || error || {};
+            const errorMessage = exception.message || exception.cause || error?.message || 'Unknown Lavalink error';
+
+            console.error(`V2 Track error in guild ${player.guildId}:`, {
+                message: errorMessage,
+                severity: exception.severity,
+                cause: exception.cause,
+                identifier: track?.info?.identifier,
+                source: track?.info?.sourceName
+            });
 
             const guildId = player.guildId;
             const channel = client.channels.cache.get(player.textChannel);
@@ -1740,7 +1749,7 @@ module.exports = (client) => {
             if (channel) {
                 const errorContainer = advancedMessageManager.createV2Container('error')
                     .addTextDisplayComponents(
-                        textDisplay => textDisplay.setContent('**⚠️ TRACK ERROR**\n\n**Failed to play:** ' + track.info.title + '\n\n**Error:** ' + (error.message || 'Unknown error') + '\n\n*' + (player.queue.length > 0 ? 'Skipping to next track...' : 'Queue is empty.') + '*')
+                        textDisplay => textDisplay.setContent('**⚠️ TRACK ERROR**\n\n**Failed to play:** ' + track.info.title + '\n\n**Error:** ' + errorMessage + '\n\n*' + (player.queue.length > 0 ? 'Skipping to next track...' : 'Queue is empty.') + '*')
                     );
 
                 const errorMsg = await channel.send({
