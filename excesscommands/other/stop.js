@@ -1,4 +1,4 @@
-function temporaryReply(message, content, timeout = 6000) {
+function temporaryReply(message, content, timeout = 5000) {
     return message.reply(content).then(reply => {
         setTimeout(() => reply.delete().catch(() => {}), timeout);
         return reply;
@@ -29,6 +29,13 @@ module.exports = {
         const queueLength = player.queue?.length || 0;
 
         try {
+            if (client.musicMessageManager) {
+                await client.musicMessageManager.cleanupGuildMessages(
+                    client,
+                    message.guild.id
+                );
+            }
+
             player.destroy();
             return temporaryReply(
                 message,
