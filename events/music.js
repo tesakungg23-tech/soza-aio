@@ -65,7 +65,7 @@ const advancedMessageManager = {
 
     getAutoDeleteTime: function (type, context = {}) {
         const times = {
-            'track': 600000,        // 10 minutes (now playing stays longer)
+            'track': 0,              // Keep now-playing visible until an explicit stop
             'lyrics': 0,            // Manual control only
             'queue': 45000,         // 45 seconds (quick reference)
             'control': 300000,      // 5 minutes (interactive controls)
@@ -551,7 +551,6 @@ module.exports = (client) => {
                     advancedMessageManager.addQuickDeleteMessage(client, lyricsEndMsg, 'info');
                 }
 
-                await advancedMessageManager.cleanupGuildMessages(client, guildId, ['track']);
                 sessionManager.updateActivity(guildId);
             } catch (error) {
                 console.error('V2 Track end error:', error);
