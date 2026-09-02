@@ -242,6 +242,10 @@ const lyricIntervals = new Map();
 const queueDisplayTimeouts = new Map();
 
 module.exports = (client) => {
+    // Expose the shared message manager to prefix music commands so they
+    // can clean up now-playing panels before destroying the Riffy player.
+    client.musicMessageManager = advancedMessageManager;
+
     if (lavalinkConfig.enabled) {
         const nodes = lavalinkConfig.lavalink.nodes || [
             {
