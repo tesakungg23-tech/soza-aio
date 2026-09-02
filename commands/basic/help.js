@@ -26,7 +26,6 @@ const {
     ButtonBuilder,
     ButtonStyle,
     StringSelectMenuBuilder,
-    MediaGalleryBuilder
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -442,19 +441,6 @@ module.exports = {
             displayComponents.push(homeContainer);
             displayComponents.push(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
 
-        
-            const bannerContainer = new ContainerBuilder().setAccentColor(0x667eea);
-            bannerContainer.addMediaGalleryComponents(
-                new MediaGalleryBuilder().addItems(
-                    item => item
-                        .setURL('https://i.ibb.co/XZM1T2Xh/Banner.png')
-                        .setDescription('All in One Bot Banner')
-                )
-            );
-            displayComponents.push(bannerContainer);
-            displayComponents.push(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-
-           
             const statsContainer = new ContainerBuilder().setAccentColor(0x5865F2);
             statsContainer.addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
