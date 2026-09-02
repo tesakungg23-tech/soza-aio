@@ -243,8 +243,9 @@ const queueDisplayTimeouts = new Map();
 
 module.exports = (client) => {
     if (lavalinkConfig.enabled) {
-        const nodes = [
+        const nodes = lavalinkConfig.lavalink.nodes || [
             {
+                name: lavalinkConfig.lavalink.name,
                 host: lavalinkConfig.lavalink.host,
                 password: lavalinkConfig.lavalink.password,
                 port: lavalinkConfig.lavalink.port,
@@ -257,8 +258,8 @@ module.exports = (client) => {
                 const guild = client.guilds.cache.get(payload.d.guild_id);
                 if (guild) guild.shard.send(payload);
             },
-            defaultSearchPlatform: "ytmsearch",
-            restVersion: "v4",
+            defaultSearchPlatform: lavalinkConfig.lavalink.defaultSearchPlatform || "ytmsearch",
+            restVersion: lavalinkConfig.lavalink.restVersion || "v4",
         });
         
         client.riffy.on('nodeConnect', (node) => {
@@ -1868,11 +1869,12 @@ module.exports = (client) => {
               
                 console.log('\x1b[33m[ V2 LAVALINK ]\x1b[0m Attempting to verify Lavalink server...');
                 try {
-                    const testUrl = `http${lavalinkConfig.lavalink.secure ? 's' : ''}://${lavalinkConfig.lavalink.host}:${lavalinkConfig.lavalink.port}/version`;
+                    const testNode = nodes[0];
+                    const testUrl = `http${testNode.secure ? 's' : ''}://${testNode.host}:${testNode.port}/version`;
                     console.log('\x1b[34m[ V2 LAVALINK ]\x1b[0m Testing:', testUrl);
                     
                     const response = await axios.get(testUrl, {
-                        headers: { 'Authorization': lavalinkConfig.lavalink.password },
+                        headers: { 'Authorization': testNode.password },
                         timeout: 5000
                     });
                     
