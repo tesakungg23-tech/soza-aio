@@ -6,9 +6,63 @@ const {
 const VoicePresence = require('../models/voicePresence/VoicePresence');
 
 const sessions = new Map();
+const clientsWithVoiceWatchdog = new WeakSet();
 
 function isUsableVoiceChannel(channel) {
     return Boolean(channel && typeof channel.isVoiceBased === 'function' && channel.isVoiceBased());
+}
+
+function clearSessionTimers(session) {
+    if (session.reconnectTimer) {
+        clearTimeout(session.reconnectTimer);
+        session.reconnectTimer = null;
+    }
+
+    if (session.guardTimer) {
+        clearInterval(session.guardTimer);
+        session.guardTimer = null;
+    }
+}
+
+function attachClientVoiceWatchdog(client) {
+    if (clientsWithVoiceWatchdog.has(client)) return;
+
+    clientsWithVoiceWatchdog.add(client);
+    client.on('voiceStateUpdate', (oldState, newState) => {
+        if (newState.id !== client.user?.id) return;
+
+        const session = sessions.get(newState.guild.id);
+        if (!session || session.intentional) return;
+
+        if (newState.channelId !== session.channelId) {
+            console.warn(
+                `[VOICE 24/7] Bot left the saved voice channel in guild ${session.guildId}; scheduling reconnect`
+            );
+            scheduleReconnect(client, session);
+        }
+    });
+}
+
+function startSessionGuard(client, session) {
+    session.guardTimer = setInterval(() => {
+        if (
+            session.intentional ||
+            sessions.get(session.guildId) !== session ||
+            session.reconnecting
+        ) {
+            return;
+        }
+
+        const guild = client.guilds.cache.get(session.guildId);
+        const botMember = guild?.members.me;
+        if (!botMember) return;
+
+        const botChannelId = botMember.voice.channelId;
+
+        if (botChannelId !== session.channelId) {
+            scheduleReconnect(client, session);
+        }
+    }, 10000);
 }
 
 function attachConnectionWatchdog(client, session, connection) {
@@ -108,7 +162,7 @@ async function joinPersistentVoice(client, channel, { persist = true, requestedB
 
     if (currentSession && currentSession.channelId !== channel.id) {
         currentSession.intentional = true;
-        if (currentSession.reconnectTimer) clearTimeout(currentSession.reconnectTimer);
+        clearSessionTimers(currentSession);
         if (currentSession.connection && currentSession.connection.state.status !== VoiceConnectionStatus.Destroyed) {
             currentSession.connection.destroy();
         }
@@ -131,7 +185,7 @@ async function joinPersistentVoice(client, channel, { persist = true, requestedB
     // reconnect timer cannot race the new /join request.
     if (currentSession) {
         currentSession.intentional = true;
-        if (currentSession.reconnectTimer) clearTimeout(currentSession.reconnectTimer);
+        clearSessionTimers(currentSession);
         if (currentSession.connection && currentSession.connection.state.status !== VoiceConnectionStatus.Destroyed) {
             currentSession.connection.destroy();
         }
@@ -151,13 +205,16 @@ async function joinPersistentVoice(client, channel, { persist = true, requestedB
         channelId: channel.id,
         connection,
         reconnectTimer: null,
+        guardTimer: null,
         reconnecting: false,
         intentional: false,
         requestedBy
     };
 
     sessions.set(guildId, session);
+    attachClientVoiceWatchdog(client);
     attachConnectionWatchdog(client, session, connection);
+    startSessionGuard(client, session);
 
     try {
         await entersState(connection, VoiceConnectionStatus.Ready, 30000);
@@ -178,6 +235,7 @@ async function joinPersistentVoice(client, channel, { persist = true, requestedB
         return { connection, alreadyConnected: false };
     } catch (error) {
         session.intentional = true;
+        clearSessionTimers(session);
         connection.destroy();
         sessions.delete(guildId);
         throw error;
