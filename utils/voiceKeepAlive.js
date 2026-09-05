@@ -286,6 +286,30 @@ async function joinPersistentVoice(client, channel, { persist = true, requestedB
     }
 }
 
+async function disablePersistentVoice(client, guildId) {
+    const session = sessions.get(guildId);
+
+    if (session) {
+        session.intentional = true;
+        clearSessionTimers(session);
+        stopSilentKeepAlive(session);
+
+        if (session.connection && session.connection.state.status !== VoiceConnectionStatus.Destroyed) {
+            session.connection.destroy();
+        }
+
+        sessions.delete(guildId);
+    }
+
+    const savedSession = await VoicePresence.findOneAndUpdate(
+        { guildId },
+        { enabled: false },
+        { new: true }
+    );
+
+    return Boolean(session || savedSession);
+}
+
 async function restorePersistentVoices(client) {
     const savedSessions = await VoicePresence.find({ enabled: true }).lean();
     let restored = 0;
@@ -315,5 +339,6 @@ async function restorePersistentVoices(client) {
 
 module.exports = {
     joinPersistentVoice,
+    disablePersistentVoice,
     restorePersistentVoices
 };

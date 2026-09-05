@@ -23,6 +23,10 @@ const SpotifyWebApi = require('spotify-web-api-node');
 const { getData } = require('spotify-url-info')(fetch);
 const config = require('../../config.js');
 const { maximizeVoiceChannelBitrate } = require('../../utils/voiceQuality');
+const {
+    joinPersistentVoice,
+    disablePersistentVoice
+} = require('../../utils/voiceKeepAlive');
 
 const spotifyApi = new SpotifyWebApi({
     clientId: config.spotifyClientId,
@@ -160,6 +164,14 @@ module.exports = {
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand
+                .setName('247')
+                .setDescription('Keep the bot connected when the voice channel is empty.')
+                .addBooleanOption(option =>
+                    option.setName('enabled')
+                        .setDescription('Enable or disable 24/7 voice mode.')
+                        .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
                 .setName('addsong')
                 .setDescription('Add a song to a playlist.')
                 .addStringOption(option =>
@@ -188,6 +200,49 @@ module.exports = {
             const member = interaction.member;
             const { channel } = member.voice;
             const client = interaction.client;
+
+            if (subcommand === '247') {
+                const enabled = interaction.options.getBoolean('enabled', true);
+
+                if (!enabled) {
+                    const wasEnabled = await disablePersistentVoice(client, guildId);
+                    return interaction.editReply({
+                        content: wasEnabled
+                            ? '24/7 voice mode disabled. I left the persistent voice channel.'
+                            : '24/7 voice mode was already disabled.'
+                    });
+                }
+
+                if (!channel) {
+                    return interaction.editReply({
+                        content: 'Join a voice channel first, then enable 24/7 mode.'
+                    });
+                }
+
+                const permissions = channel.permissionsFor(client.user);
+                if (!permissions?.has(PermissionFlagsBits.Connect)) {
+                    return interaction.editReply({
+                        content: 'I need the Connect permission to join that voice channel.'
+                    });
+                }
+
+                try {
+                    const result = await joinPersistentVoice(client, channel, {
+                        requestedBy: userId
+                    });
+
+                    return interaction.editReply({
+                        content: result.alreadyConnected
+                            ? `24/7 mode is already enabled in **${channel.name}**. I will stay there when it is empty.`
+                            : `24/7 mode enabled in **${channel.name}**. I will stay connected when everyone leaves and reconnect automatically if needed.`
+                    });
+                } catch (error) {
+                    console.error('[VOICE 24/7] Failed to enable from /music 247:', error);
+                    return interaction.editReply({
+                        content: 'I could not enable 24/7 mode. Check my Connect permission and try again.'
+                    });
+                }
+            }
 
       
             const checkVoiceChannel = async () => {
