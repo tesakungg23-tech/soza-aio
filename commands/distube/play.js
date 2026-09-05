@@ -18,6 +18,7 @@ require('dotenv').config();
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle } = require('discord.js');
 const ytSearch = require('yt-search');
+const { maximizeVoiceChannelBitrate } = require('../../utils/voiceQuality');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -318,6 +319,8 @@ module.exports = {
       this.autoDeleteMessage(message);
       return;
     }
+
+    await maximizeVoiceChannelBitrate(channel);
 
     const queue = distube.getQueue(interaction.guild.id);
 
