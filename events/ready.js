@@ -2,6 +2,7 @@ const { ActivityType } = require('discord.js');
 const { botStatusCollection } = require('../mongodb');
 const colors = require('../UI/colors/colors');
 const config = require('../config');
+const { restorePersistentVoices } = require('../utils/voiceKeepAlive');
 
 module.exports = {
     name: 'clientReady',
@@ -148,6 +149,13 @@ module.exports = {
         
        
         checkAndUpdateInterval();
+
+        try {
+            const restoredVoices = await restorePersistentVoices(client);
+            console.log(`${colors.cyan}[VOICE 24/7]${colors.reset} Restored ${restoredVoices} persistent voice connection(s)`);
+        } catch (error) {
+            console.warn(`${colors.yellow}[VOICE 24/7]${colors.reset} Could not restore persistent voice connections: ${error.message}`);
+        }
 
         console.log('\x1b[31m[ CORE ]\x1b[0m \x1b[32m%s\x1b[0m', 'Bot Activity Cycle Running ✅');
     }
