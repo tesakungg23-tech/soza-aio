@@ -1,9 +1,8 @@
 const { DisTube } = require('distube');
-const { YtDlpPlugin } = require('@distube/yt-dlp');
+const { HighQualityYtDlpPlugin } = require('../utils/highQualityYtdlpPlugin');
 const { Dynamic } = require('musicard');
 const musicIcons = require('../UI/icons/musicicons');
 const { EmbedBuilder } = require('discord.js');
-const path = require('path');
 const data = require('../UI/banners/musicard');
 
 module.exports = async (client) => {
@@ -14,9 +13,8 @@ module.exports = async (client) => {
     client.distube = new DisTube(client, {
         ...distubeConfig.distubeOptions,
         plugins: [
-            new YtDlpPlugin({
+            new HighQualityYtDlpPlugin({
                 update: false, 
-                cookies: path.join(__dirname, '../utils/cookies.txt'), 
             })
         ],
     });
