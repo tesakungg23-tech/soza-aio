@@ -67,6 +67,8 @@ DISCORD_GUILD_ID=
 REQUIRE_BOT_VERIFICATION=false
 </pre>
 
+<p><strong>24/7 voice:</strong> <code>/join</code> connects without playing audio, saves the selected voice channel in MongoDB, and restores the connection automatically after a bot restart or Railway redeploy. Keep <code>MONGODB_URI</code> configured in Railway so the saved voice session is available after redeploys.</p>
+
 <h4>Step 2: Set Up Hosting Service</h4>
 
 <ol>

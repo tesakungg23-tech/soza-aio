@@ -78,7 +78,7 @@ async function reconnectSession(client, session) {
             guildId: guild.id,
             adapterCreator: guild.voiceAdapterCreator,
             selfDeaf: true,
-            selfMute: false
+            selfMute: true
         });
 
         session.connection = connection;
@@ -126,12 +126,24 @@ async function joinPersistentVoice(client, channel, { persist = true, requestedB
         return { connection: currentSession.connection, alreadyConnected: true };
     }
 
+    // The old session may still be tracked after Discord reports a
+    // disconnect. Remove it before creating the replacement so its pending
+    // reconnect timer cannot race the new /join request.
+    if (currentSession) {
+        currentSession.intentional = true;
+        if (currentSession.reconnectTimer) clearTimeout(currentSession.reconnectTimer);
+        if (currentSession.connection && currentSession.connection.state.status !== VoiceConnectionStatus.Destroyed) {
+            currentSession.connection.destroy();
+        }
+        sessions.delete(guildId);
+    }
+
     const connection = joinVoiceChannel({
         channelId: channel.id,
         guildId,
         adapterCreator: channel.guild.voiceAdapterCreator,
         selfDeaf: true,
-        selfMute: false
+        selfMute: true
     });
 
     const session = {
