@@ -1797,14 +1797,11 @@ module.exports = (client) => {
         setInterval(cleanupOrphanedResources, 3 * 60 * 1000);
 
         client.on('error', async (error) => {
-            //console.error('V2 Client error:', error);
-
-            if (error.message.includes('voice') || error.message.includes('connection')) {
-                for (const [guildId, player] of client.riffy.players) {
-                    await handlePlayerCleanup(client, guildId, player, 'Client error recovery');
-                    player.destroy();
-                }
-            }
+            // A Discord client error does not reliably identify the affected
+            // guild. Never destroy every guild's player from this global event:
+            // an isolated voice failure in one guild would disconnect all
+            // other active music sessions as well.
+            console.error('V2 Client error:', error);
         });
 
         process.on('unhandledRejection', (reason, promise) => {
