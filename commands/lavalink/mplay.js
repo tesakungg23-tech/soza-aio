@@ -22,6 +22,7 @@ const { playlistCollection } = require('../../mongodb');
 const SpotifyWebApi = require('spotify-web-api-node');
 const { getData } = require('spotify-url-info')(fetch);
 const config = require('../../config.js');
+const { maximizeVoiceChannelBitrate } = require('../../utils/voiceQuality');
 
 const spotifyApi = new SpotifyWebApi({
     clientId: config.spotifyClientId,
@@ -239,6 +240,7 @@ module.exports = {
                     return false;
                 }
 
+                await maximizeVoiceChannelBitrate(channel);
                 return true;
             };
 
